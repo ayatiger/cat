@@ -153,6 +153,7 @@ class _LoginScreenState extends State<LoginScreen> implements LoginNavigator {
       CacheHelper.saveData(key: 'type', value: type);
       CacheHelper.saveData(key: 'name', value: name);
       viewModel.loginFirebaseAuth(email, password);
+      CacheHelper.saveData(key:'isLogout',value:false);
     }
   }
 

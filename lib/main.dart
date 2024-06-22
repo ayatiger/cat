@@ -14,6 +14,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'bloc/cubit.dart';
 import 'network/local/bloc_observer.dart';
 import 'network/local/cache_helper.dart';
+import 'package:chat/network/local/cache_helper.dart';
+
 
 FirebaseMessaging messaging = FirebaseMessaging.instance;
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -154,7 +156,7 @@ class _MyAppState extends State<MyApp> {
           AddRoom.routeName: (context) => AddRoom(),
           // ChatScreen.routeName: (context) => ChatScreen(),
         },
-        home: userProvider.firebaseUser == null
+        home: CacheHelper.getData(key:'isLogout') == true
             ? LoginScreen()
             : const AppLayout(),
         // initialRoute: userProvider.firebaseUser == null

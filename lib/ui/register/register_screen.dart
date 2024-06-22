@@ -267,6 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       CacheHelper.saveData(key: 'name', value: firstName + " " + lastName);
       CacheHelper.saveData(key: 'type', value: type);
       CacheHelper.saveData(key: 'disease', value: disease);
+      CacheHelper.saveData(key:'isLogout',value:false);
       viewModel.registerFirebaseAuth(
           email, password, firstName, lastName, userName,isDoc,userType);
     }

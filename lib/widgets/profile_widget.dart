@@ -23,28 +23,30 @@ class ProfileWidget extends StatefulWidget {
 
 class _ProfileWidgetState extends State<ProfileWidget> {
   File? image;
-
-  File? myFile;
+  String? imagePath;
 
   Future pickImage(ImageSource source, BuildContext context) async {
     try {
-      final image = await ImagePicker().pickImage(source: source);
-      if (image == null) return;
+      final pickedImage = await ImagePicker().pickImage(source: source);
+      if (pickedImage == null) return;
 
-      final imageTemporary = await saveImage(image.path);
+      final savedImagePath = await saveImage(pickedImage.path);
       setState(() {
-        this.image = imageTemporary;
-        myFile = File(image.path);
-        CacheHelper.saveData(key: 'image', value: myFile);
+        image = File(savedImagePath);
+        imagePath = savedImagePath;
+        CacheHelper.saveData(key: 'image_path', value: savedImagePath);
       });
-    } on PlatformException catch (e) {}
+    } on PlatformException catch (e) {
+      // Handle error
+    }
   }
 
-  Future<File> saveImage(String imagePath) async {
+  Future<String> saveImage(String imagePath) async {
     final directory = await getApplicationDocumentsDirectory();
     final name = basename(imagePath);
-    final image = File('${directory.path}/$name');
-    return File(imagePath).copy(image.path);
+    final savedImagePath = '${directory.path}/$name';
+    await File(imagePath).copy(savedImagePath);
+    return savedImagePath;
   }
 
   void buildCameraDialog(BuildContext context) {
@@ -61,10 +63,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
               children: [
                 TextButton(
                   onPressed: () {
-                    setState(() {
-                      pickImage(ImageSource.camera, context);
-                      Navigator.pop(context);
-                    });
+                    pickImage(ImageSource.camera, context);
+                    Navigator.pop(context);
                   },
                   child: Text(
                     'Camera',
@@ -74,10 +74,8 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    setState(() {
-                      pickImage(ImageSource.gallery, context);
-                      Navigator.pop(context);
-                    });
+                    pickImage(ImageSource.gallery, context);
+                    Navigator.pop(context);
                   },
                   child: Text(
                     'Gallery',
@@ -90,6 +88,22 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadImage();
+  }
+
+  void loadImage() {
+    final savedImagePath = CacheHelper.getData(key: 'image_path');
+    if (savedImagePath != null) {
+      setState(() {
+        image = File(savedImagePath);
+        imagePath = savedImagePath;
+      });
+    }
   }
 
   @override
@@ -126,44 +140,47 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                           children: [
                             Row(
                               children: [
-                                Align(
-                                  alignment: Alignment.center,
-                                  child: image != null
-                                      ? SizedBox(
-                                          width: 120,
-                                          height: 120,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(2.2),
-                                            child: Container(
-                                              decoration: const BoxDecoration(
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: ClipOval(
-                                                child: Image.file(
-                                                  image!,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            ),
+                                if (image != null)
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: SizedBox(
+                                      width: 120,
+                                      height: 120,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2.2),
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
                                           ),
-                                        )
-                                      : SizedBox(
-                                          width: 120,
-                                          height: 120,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(2.2),
-                                            child: Container(
-                                              height: 120,
-                                              decoration: const BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Color.fromRGBO(
-                                                    0, 0, 0, 0.2),
-                                              ),
-                                              // child: SvgPicture.asset('assets/svg/person.svg'),
+                                          child: ClipOval(
+                                            child: Image.file(
+                                              image!,
+                                              fit: BoxFit.cover,
                                             ),
                                           ),
                                         ),
-                                ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: SizedBox(
+                                      width: 120,
+                                      height: 120,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2.2),
+                                        child: Container(
+                                          height: 120,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color.fromRGBO(
+                                                0, 0, 0, 0.2),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 const SizedBox(width: 20),
                                 Align(
                                   alignment: Alignment.center,
@@ -172,7 +189,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                       buildCameraDialog(context);
                                     },
                                     child: Text(
-                                      'change photo',
+                                      'Change Photo',
                                       style: mainTextStyle(
                                         context,
                                         color: black,
@@ -220,15 +237,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       style: mainTextStyle(context),
                     ),
                     const SizedBox(height: 30),
-                    // Text(CacheHelper.getData(key: 'type')),
-                    // CacheHelper.getData(key: 'type')=='patient'?TFF(
-                    //   action: TextInputAction.send,
-                    //   type: TextInputType.text,
-                    //   isPrefix: false,
-                    //   underlineBorder: false,
-                    //   label: "Disease",
-                    //   hint: "enter your disease",
-                    // ):const SizedBox.shrink(),
                     const SizedBox(height: 50),
                     ElevatedButton(
                       onPressed: () {
@@ -238,6 +246,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                             child: LoginScreen(),
                           ),
                         );
+                        CacheHelper.saveData(key:'isLogout',value:true);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: defaultColor,
